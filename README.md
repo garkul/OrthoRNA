@@ -19,4 +19,14 @@ The search for orthologues is performed by the <a href="https://github.com/dmitr
 # Usage
 So far, the launch of OrthoRNA is carried out as follows:
 
-```python3 OrthoRNA.py name_of_file_with_rna.bed number_of_cores```
+```
+usage: OrthoRNA.py [-h] bed_file_name all_cores cores_per_thread
+  
+positional arguments:
+  bed_file_name     File path with query RNA coordinates (.bed format)
+  all_cores         Total number of cores
+  cores_per_thread  Number of cores per thread
+
+optional arguments:
+  -h, --help        show this help message and exit
+  ```
