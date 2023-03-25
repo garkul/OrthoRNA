@@ -49,5 +49,5 @@ outdirs[platypus]="./result/platypus_result/"
 outdirs[cat]="./result/cat_result/"
 
 
-ortho2align run_pipeline -query_genes "$1" -query_genome ./organisms/hg38.p13.fa -subject_annotation "${org_annotations[$2]}" -subject_genome "${org_genomes[$2]}" -liftover_chains "${org_chainfiles[$2]}" -outdir "${outdirs[$2]}" --annotate --fdr -cores 2
+ortho2align run_pipeline -query_genes "$1" -query_genome ./organisms/hg38.p13.fa -subject_annotation "${org_annotations[$2]}" -subject_genome "${org_genomes[$2]}" -liftover_chains "${org_chainfiles[$2]}" -outdir "${outdirs[$2]}" --annotate --fdr -cores "$3"
 conda deactivate

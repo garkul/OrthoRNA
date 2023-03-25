@@ -1,23 +1,31 @@
-import sys
+import argparse
 import subprocess
 import shlex
 import seaborn as sns
 import pandas as pd
 import numpy as np
+import concurrent.futures
 
 from matplotlib import pyplot as plt
 from matplotlib.patches import Patch
-from multiprocessing import Pool
 from functools import partial
 
-def OrthoRNA(bed_with_rna_coord=sys.argv[1], cores=sys.argv[2]):
+parser = argparse.ArgumentParser()
+
+parser.add_argument("bed_file_name", type=str, help='File path with query RNA coordinates (.bed format)')
+parser.add_argument("all_cores", type=int, help="Total number of cores")
+parser.add_argument("cores_per_thread", type=int, help="Number of cores per thread")
+
+args = parser.parse_args()
+
+def OrthoRNA(bed_with_rna_coord=args.bed_file_name, all_cores=args.all_cores, cores_per_thread=args.cores_per_thread):
     #ORTHO2ALIGN PARALLELIZATION
-    ortho2align_multiprocess(bed_with_rna_coord, cores)
+    ortho2align_multiprocess(bed_with_rna_coord, all_cores, cores_per_thread)
 
     #RESULT VISUSLIZATION
     org = ['gorilla', 'marmoset', 'pig', 'horse', 'dog', 'cat', 'mouse', 'chicken', 'platypus']
     #Reading files
-    initial_df = pd.read_csv('./test_pipe.bed', sep='\t', header=None)
+    initial_df = pd.read_csv(bed_with_rna_coord, sep='\t', header=None)
 
     for i in org:
         org_df = []
@@ -58,13 +66,14 @@ def OrthoRNA(bed_with_rna_coord=sys.argv[1], cores=sys.argv[2]):
     for i in org:
         df_bed = add_organism_score(locals()['{}_bed'.format(i)], df_bed)
     df_bed = df_bed.drop(columns=['human'])
+    df_bed.to_csv('./result/score_table_of_orthologues.tab', sep="\t", index=True)
 
     #Normalisation (Query RNA length)
     rna_length = dict()
     for i in initial_df[3].tolist():
         rna_length[i] = int(initial_df[initial_df[3] == i][2]) - int(initial_df[initial_df[3] == i][1])
     df_bed = df_bed.div(rna_length, axis='index')
-    df_bed.to_csv('./result/score_table_of_orthologues.tab', sep="\t", index=True)
+    df_bed.to_csv('./result/score_table_of_orthologues_normalized.tab', sep="\t", index=True)
     
 
     #Drawing an illustration df_bed
@@ -80,9 +89,9 @@ def OrthoRNA(bed_with_rna_coord=sys.argv[1], cores=sys.argv[2]):
     annot_merge.to_csv('./result/annotation_table_of_orthologues.tab', sep="\t", index=True)
 
 
-def ortho2align_task(bed_with_rna_coord, org_name):
+def ortho2align_task(bed_with_rna_coord, org_name, cores_per_thread):
     with open("./ortho2align_stderr/ortho2align_stderr_{}.log".format(org_name), "w") as err:
-            cmd = 'bash script.sh {} {}'.format(bed_with_rna_coord, org_name)
+            cmd = 'bash script.sh ' + bed_with_rna_coord + ' ' + org_name + ' ' + str(cores_per_thread)
             process = subprocess.Popen(
                 shlex.split(cmd),
                 stderr=err,
@@ -90,11 +99,12 @@ def ortho2align_task(bed_with_rna_coord, org_name):
             process.wait()
     return 
 
-def ortho2align_multiprocess(bed_with_rna_coord, cores):
+def ortho2align_multiprocess(bed_with_rna_coord, all_cores, cores_per_thread):
     org = ['gorilla', 'marmoset', 'pig', 'horse', 'dog', 'cat', 'mouse', 'chicken', 'platypus']
-    with Pool(int(cores)) as pool:
-        results = pool.map(partial(ortho2align_task, bed_with_rna_coord), org)
-    return results
+    with concurrent.futures.ThreadPoolExecutor(all_cores) as executor:
+        futures = [executor.submit(ortho2align_task, bed_with_rna_coord, i, cores_per_thread) for i in org]
+        # wait for all download tasks to complete
+        _ = concurrent.futures.wait(futures)
 
 
 def add_organism(org_name_df, df, col_name):
@@ -114,8 +124,7 @@ def add_organism_annotation(org_df, org, df):
 def clustermap(df, row_colors, handles, pal, fig_name, bool=True):
     sns.set(font_scale=1.5)
     mask = df.isin([0])
-    clustermap = sns.clustermap(df.T, col_colors=row_colors, mask=mask.T, cmap="viridis", linewidths=3, linecolor='black',
-                                tree_kws=dict(linewidths=4, colors=(0, 0, 0)))
+    clustermap = sns.clustermap(df.T, col_colors=row_colors, mask=mask.T, cmap="viridis")
     clustermap.cax.set_visible(bool)
     plt.setp(clustermap.ax_heatmap.get_yticklabels(), rotation=0)
     plt.legend(handles, pal, title='Число аннотированных ортологов', bbox_to_anchor=(1, 1), bbox_transform=plt.gcf().transFigure)
