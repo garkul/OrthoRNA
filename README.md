@@ -14,7 +14,7 @@
 
 The search for orthologues is performed by the <a href="https://github.com/dmitrymyl/ortho2align">ortho2align </a> tool. The process of searching for orthologues in 9 species is parallelised and the number of cores can be specified at startup.
 ## OrthoRNA scheme
-![OrthoRNA scheme](./orthoRNA_pipline.png)
+![OrthoRNA scheme](./orthoRNA_pipeline.png)
 
 # Usage
 So far, the launch of OrthoRNA is carried out as follows:
