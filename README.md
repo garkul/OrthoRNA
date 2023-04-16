@@ -30,3 +30,29 @@ positional arguments:
 optional arguments:
   -h, --help        show this help message and exit
   ```
+# Output files
+```
+result/
+├── annotation_table_of_orthologues.tab
+├── binary_table_of_orthologues.tab
+├── insignificant.annotation.tsv
+├── score_table_of_orthologues.tab
+├── score_table_of_orthologues_normalized.tab
+├── cat_result/
+│   ├── align_files/
+│   ├── annotation_files/
+│   ├── bg_files/
+│   ├── build_files/
+│   ├── bestSignificant.query_orthologs.bed
+│   ├── bestSignificant.query_orthologs.tsv
+│   ├── bestSignificant.subject_orthologs.bed
+│   ├── bestSignificant.subject_orthologs.tsv
+│   ├── shuffle_bg.bed
+│   └── stats.txt
+├── chicken_result/
+└── ...
+ortho2align_stderr/
+├── ortho2align_stderr_cat.log
+├── ortho2align_stderr_chicken.log
+└── ...
+```
